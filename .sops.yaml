@@ -1,0 +1,9 @@
+keys:
+  - &admin_scott age15hzqzdp289m868stvw6937hdzt3qqt0hz5uj4tqt7et5yne0s5eq7dhmgn
+  - &gitlab_runner age17k8pcp67vq2h6ayfygqs3hcju6uxs4km5dyr336qk3ypdded7yhq6ch4xd
+
+creation_rules:
+  - key_groups:
+    - age:
+      - *admin_scott
+      - *gitlab_runner

@@ -6,16 +6,39 @@
       url = "github:terranix/terranix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    homelab-ci.url = "github:scottbot95/homelab-ci";
+    homelab-ci.inputs.nixpkgs.follows = "nixpkgs";
+    terraform-nixos.url = "github:numtide/terraform-deploy-nixos-flakes";
+    terraform-nixos.flake = false;
   };
 
-  outputs = { self, nixpkgs, flake-utils, terranix }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, flake-utils, terranix, homelab-ci, terraform-nixos }:
+    (flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        terraform = pkgs.terraform_0_15;
-        terraformConfiguration = terranix.lib.terranixConfiguration {
+        terraform = pkgs.terraform;
+        terranixConfigArgs = {
           inherit system;
-          modules = [ ./config.nix ];
+          modules = [ 
+            ./config.nix
+            { 
+              terraform-nixos = terraform-nixos.outPath;
+            }
+          ];
+        };
+        terraformConfiguration = terranix.lib.terranixConfiguration terranixConfigArgs;
+        terranixApp = {
+          command,
+          name ? command,
+          config ? terraformConfiguration,
+        }: {
+          type = "app";
+          program = toString (pkgs.writers.writeBash name ''
+            if [[ -e config.tf.json ]]; then rm -f config.tf.json; fi
+            cp ${config} config.tf.json \
+              && ${terraform}/bin/terraform init \
+              && ${terraform}/bin/terraform ${command} "$@"
+          '');
         };
       in
       {
@@ -23,31 +46,24 @@
         # nix develop
         devShell = pkgs.mkShell {
           buildInputs = [
-            pkgs.terraform_0_15
+            pkgs.jq
+            terraform
             terranix.defaultPackage.${system}
           ];
         };
         # nix run ".#apply"
-        apps.apply = {
-          type = "app";
-          program = toString (pkgs.writers.writeBash "apply" ''
-            if [[ -e config.tf.json ]]; then rm -f config.tf.json; fi
-            cp ${terraformConfiguration} config.tf.json \
-              && ${terraform}/bin/terraform init \
-              && ${terraform}/bin/terraform apply
-          '');
-        };
+        apps.apply = terranixApp { command ="apply"; };
         # nix run ".#destroy"
-        apps.destroy = {
-          type = "app";
-          program = toString (pkgs.writers.writeBash "destroy" ''
-            if [[ -e config.tf.json ]]; then rm -f config.tf.json; fi
-            cp ${terraformConfiguration} config.tf.json \
-              && ${terraform}/bin/terraform init \
-              && ${terraform}/bin/terraform destroy
-          '');
-        };
+        apps.destroy = terranixApp { command = "destroy"; };
         # nix run
         defaultApp = self.apps.${system}.apply;
-      });
+      })) // {
+        nixosConfigurations.gitlab = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [ 
+            ./configuration.nix
+            homelab-ci.nixosModules.proxmox-guest-profile
+          ];
+        };
+      };
 }
