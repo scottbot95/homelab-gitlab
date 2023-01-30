@@ -8,11 +8,13 @@
     };
     homelab-ci.url = "github:scottbot95/homelab-ci";
     homelab-ci.inputs.nixpkgs.follows = "nixpkgs";
-    terraform-nixos.url = "github:numtide/terraform-deploy-nixos-flakes";
-    terraform-nixos.flake = false;
+
+    terranix-proxmox.url = "github:scottbot95/terranix-proxmox";
+    terranix-proxmox.inputs.nixpkgs.follows = "nixpkgs";
+    terranix-proxmox.inputs.terranix.follows = "terranix";
   };
 
-  outputs = { self, nixpkgs, flake-utils, terranix, homelab-ci, terraform-nixos }:
+  outputs = { self, nixpkgs, flake-utils, terranix, homelab-ci, terranix-proxmox }:
     (flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -21,9 +23,7 @@
           inherit system;
           modules = [ 
             ./config.nix
-            { 
-              terraform-nixos = terraform-nixos.outPath;
-            }
+            terranix-proxmox.terranixModule
           ];
         };
         terraformConfiguration = terranix.lib.terranixConfiguration terranixConfigArgs;
@@ -50,6 +50,14 @@
             terraform
             terranix.defaultPackage.${system}
           ];
+        };
+        # nix run ".#build"
+        apps.build = {
+          type = "app";
+          program = toString (pkgs.writers.writeBash "build" ''
+            if [[ -e config.tf.json ]]; then rm -f config.tf.json; fi
+            cp ${terraformConfiguration} config.tf.json
+          '');
         };
         # nix run ".#apply"
         apps.apply = terranixApp { command ="apply"; };
