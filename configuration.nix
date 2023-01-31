@@ -50,6 +50,8 @@
       mkdir -p -m 1777 /nix/var/nix/profiles/per-user
       mkdir -p -m 0755 /nix/var/nix/profiles/per-user/root
       mkdir -p -m 0700 "$HOME/.nix-defexpr"
+      mkdir -p -m 0755 /etc/nix
+      echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
       . ${pkgs.nix}/etc/profile.d/nix-daemon.sh
       ${pkgs.nix}/bin/nix-env -i ${builtins.concatStringsSep " " (with pkgs; [ nix cacert git openssh ])}
     '';
