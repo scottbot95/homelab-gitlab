@@ -72,6 +72,8 @@
         apps.apply = terranixApp { command ="apply"; };
         # nix run ".#destroy"
         apps.destroy = terranixApp { command = "destroy"; };
+        # nix run ".#plan"
+        apps.plan = terranixApp { command = "plan"; };
         # nix run
         defaultApp = self.apps.${system}.apply;
       })) // {
