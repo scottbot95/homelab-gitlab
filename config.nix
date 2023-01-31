@@ -3,10 +3,10 @@ let
   hostname = "gitlab";
   extractSecret = secret: "\${data.sops_file.secrets.data[\"${secret}\"]}";
 in {
-  # terraform.cloud = {
-  #   organization = "faultymuse-homelab";
-  #   workspaces.name = "gitlab-test";
-  # };
+  terraform.cloud = {
+    organization = "faultymuse-homelab";
+    workspaces.name = "gitlab-test";
+  };
   terraform.required_providers = {
     sops = {
       source = "carlpett/sops";
@@ -21,10 +21,11 @@ in {
   };
 
   proxmox = {
+    show_deploy_ouptut = true;
     provider = {
       endpoint = "https://pve.faultymuse.com:8006/api2/json";
-      token_id = extractSecret "pm_api_token_id";
-      token_secret = extractSecret "pm_api_token_secret";
+      token_id = extractSecret "pm_api.token_id";
+      token_secret = extractSecret "pm_api.token_secret";
       log_level = "debug";
     };
 
@@ -47,5 +48,9 @@ in {
         firewall = false;
       }];
     };
+  };
+
+  module.gitlab_deploy_nixos.keys = {
+    age = "\${data.sops_file.secrets.data[\"age_key\"]}";
   };
 }

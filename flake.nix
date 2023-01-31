@@ -9,15 +9,19 @@
     homelab-ci.url = "github:scottbot95/homelab-ci";
     homelab-ci.inputs.nixpkgs.follows = "nixpkgs";
 
+    sops-nix.url = github:Mic92/sops-nix;
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     terranix-proxmox.url = "github:scottbot95/terranix-proxmox";
     terranix-proxmox.inputs.nixpkgs.follows = "nixpkgs";
     terranix-proxmox.inputs.terranix.follows = "terranix";
   };
 
-  outputs = { self, nixpkgs, flake-utils, terranix, homelab-ci, terranix-proxmox }:
+  outputs = { self, nixpkgs, flake-utils, terranix, homelab-ci, terranix-proxmox, sops-nix }:
     (flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        sops = "${pkgs.sops}/bin/sops";
         terraform = pkgs.terraform;
         terranixConfigArgs = {
           inherit system;
@@ -34,10 +38,15 @@
         }: {
           type = "app";
           program = toString (pkgs.writers.writeBash name ''
+            set -e
             if [[ -e config.tf.json ]]; then rm -f config.tf.json; fi
-            cp ${config} config.tf.json \
-              && ${terraform}/bin/terraform init \
-              && ${terraform}/bin/terraform ${command} "$@"
+            cp ${config} config.tf.json 
+
+            export PATH=${pkgs.jq}/bin:$PATH
+            export TF_TOKEN_app_terraform_io=$(${sops} --extract '["tf_token"]' -d secrets.yaml)
+
+            ${terraform}/bin/terraform init 
+            ${terraform}/bin/terraform ${command} "$@"
           '');
         };
       in
@@ -69,8 +78,10 @@
         nixosConfigurations.gitlab = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [ 
-            ./configuration.nix
+            ./configuration.nix 
             homelab-ci.nixosModules.proxmox-guest-profile
+            homelab-ci.nixosModules.sops
+            sops-nix.nixosModules.sops
           ];
         };
       };
