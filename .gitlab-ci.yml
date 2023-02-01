@@ -4,6 +4,8 @@ stages:
   - deploy
 
 default:
+  tags:
+    - nix
   before_script:
     - . "$HOME/.nix-profile/etc/profile.d/nix.sh"
     # - export NIX_CONFIG=extra-experimental-features='nix-command flakes'
@@ -18,7 +20,7 @@ plan:
   script:
     - nix run .#plan -- -out ./tf.plan
 
-deploy:
+.deploy:
   stage: deploy
   script:
     - nix run .#apply -- ./tf.plan
