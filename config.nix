@@ -47,6 +47,14 @@ in {
         tag = 20;
         firewall = false;
       }];
+
+      disk = [{
+        type = "scsi";
+        storage = "nvme0";
+        size = "100G";
+        ssd = true;
+        discard = true;
+      }];
     };
   };
 
