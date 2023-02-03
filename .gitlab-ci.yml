@@ -18,6 +18,9 @@ plan:
   stage: approve-changes
   script:
     - nix run .#plan -- -out ./tf.plan
+  artifacts:
+    paths: [ ./tf.plan ]
+    public: false
 
 deploy:
   stage: deploy
