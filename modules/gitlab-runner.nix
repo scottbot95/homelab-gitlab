@@ -1,21 +1,14 @@
-{ config, lib, pkgs, ...}: {
-  boot.kernel.sysctl."net.ipv4.ip_forward" = true; # need so docker can access internet
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
-    autoResize = true;
-    fsType = "ext4";
-  };
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/ESP";
-    fsType = "vfat";
-  };
+{ config, pkgs, lib, ... }:
+{
 
-  networking.hostName = "gitlab";
+  # needed so docker can access internet
+  boot.kernel.sysctl."net.ipv4.ip_forward" = true;
 
-  sops.defaultSopsFile = ./secrets.yaml;
+  sops.secrets."age_key" = {};
+  sops.secrets."gitlab/url" = {};
+  sops.secrets."gitlab/registration_token" = {};
+  sops.secrets."tf_token" = {};
 
-  scott.sops.enable = true;
-  scott.sops.ageKeyFile = "/var/keys/age";
   scott.sops.envFiles.gitlab-runner = {
     vars = {
       CI_SERVER_URL = "gitlab/url";
@@ -24,16 +17,6 @@
     requiredBy = [ "gitlab-runner.service" ];
   };
 
-  sops.secrets."age_key" = {};
-  sops.secrets."gitlab/url" = {};
-  sops.secrets."gitlab/registration_token" = {};
-  sops.secrets."tf_token" = {};
-
-  # users.users.root.openssh.authorizedKeys.keys = [
-  #   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICnt0c1V/ZZFW5J3HGqqxDwr6zoq5ouB5uB7IFXxZqdB cardno:18_978_827"
-  # ];
-
-  virtualisation.docker.enable = true;
   services.gitlab-runner.enable = true;
   # runner for building in docker via host's nix-daemon
   # nix store will be readable in runner, might be insecure
@@ -74,7 +57,4 @@
     ];
     tagList = [ "nix" ];
   };
-  
-
-  system.stateVersion = "23.05";
 }

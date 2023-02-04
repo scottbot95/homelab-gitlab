@@ -1,6 +1,5 @@
 { config, lib, terraform-nixos, ... }:
 let
-  hostname = "gitlab";
   extractSecret = secret: "\${data.sops_file.secrets.data[\"${secret}\"]}";
 in {
   terraform.cloud = {
@@ -29,7 +28,7 @@ in {
       log_level = "debug";
     };
 
-    qemu.gitlab = {
+    qemu.bob-the-builder = {
       enable = true;
       agent = true;
       target_node = "pve";
@@ -58,7 +57,7 @@ in {
     };
   };
 
-  module.gitlab_deploy_nixos.keys = {
+  module.bob-the-builder_deploy_nixos.keys = {
     age = "\${data.sops_file.secrets.data[\"age_key\"]}";
   };
 }

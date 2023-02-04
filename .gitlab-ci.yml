@@ -9,10 +9,10 @@ default:
   before_script:
     - . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 
-build-job:
+prebuild:
   stage: build
   script:
-    - nix build . .#nixosConfigurations.gitlab.config.system.build.toplevel
+    - nix build .#prebuild
 
 plan:
   stage: approve-changes

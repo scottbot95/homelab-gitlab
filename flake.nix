@@ -51,6 +51,7 @@
         };
       in
       {
+        packages.tf-config = terraformConfiguration;
         defaultPackage = terraformConfiguration;
         # nix develop
         devShell = pkgs.mkShell {
@@ -76,15 +77,32 @@
         apps.plan = terranixApp { command = "plan"; };
         # nix run
         defaultApp = self.apps.${system}.apply;
+
+        packages.prebuild = 
+          let
+            machines = pkgs.lib.filterAttrs (_: machine: machine.pkgs.system == system) self.nixosConfigurations;
+            linkMachines = pkgs.lib.mapAttrsToList (name: machine: "ln -s ${machine.config.system.build.toplevel} $out/${name}") machines;
+          in derivation {
+            inherit system;
+            name = "prebuild";
+            PATH = "${pkgs.coreutils}/bin";
+            builder = pkgs.writeShellScript "prebuild" ''
+              mkdir -p $out
+              ln -s ${terraformConfiguration} $out/config.tf.json
+              ${builtins.concatStringsSep "\n" linkMachines}
+            '';
+          };
       })) // {
-        nixosConfigurations.gitlab = nixpkgs.lib.nixosSystem {
+        nixosConfigurations.bob-the-builder = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [ 
-            ./configuration.nix 
+            ./machines/bob-the-builder/configuration.nix 
             homelab-ci.nixosModules.proxmox-guest-profile
             homelab-ci.nixosModules.sops
             sops-nix.nixosModules.sops
           ];
         };
+
+        # packages.x86_64-linux.pre-build = 
       };
 }
