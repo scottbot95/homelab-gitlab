@@ -27,7 +27,7 @@
   };
 
   systemd.services.jenkins = { 
-    serviceConfig.environmentFile = "/run/secrets/jenkins.env";
+    serviceConfig.EnvironmentFile = "/run/secrets/jenkins.env";
   };
 
   services.nginx = {
