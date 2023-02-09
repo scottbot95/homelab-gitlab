@@ -1,5 +1,16 @@
 { config, options, pkgs, ... }:
 {
+  sops.secrets."age_key" = {};
+  sops.secrets."tf_token" = {};
+
+  scott.sops.envFiles.jenkins = {
+    vars = {
+      SOPS_AGE_KEY = "age_key";
+      TF_TOKEN_app_terraform_io = "tf_token";
+    };
+    requiredBy = [ "jenkins.service" ];
+  };
+
   services.jenkins = {
     enable = true;
     packages = options.services.jenkins.packages.default ++ (with pkgs; [
@@ -13,6 +24,10 @@
     extraJavaOptions = [
       "-Dorg.jenkinsci.plugins.durabletask.BourneShellScript.LAUNCH_DIAGNOSTICS=true"
     ];
+  };
+
+  systemd.services.jenkins = { 
+    serviceConfig.environmentFile = "/run/secrets/jenkins.env";
   };
 
   services.nginx = {
