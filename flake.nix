@@ -93,10 +93,10 @@
             '';
           };
       })) // {
-        nixosConfigurations.bob-the-builder = nixpkgs.lib.nixosSystem {
+        nixosConfigurations.gitlab = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [ 
-            ./machines/bob-the-builder/configuration.nix 
+            ./machines/gitlab/configuration.nix 
             homelab-ci.nixosModules.proxmox-guest-profile
             homelab-ci.nixosModules.sops
             sops-nix.nixosModules.sops

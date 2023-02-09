@@ -1,6 +1,8 @@
 { config, lib, pkgs, ...}: {
   imports = [
-    ../../modules/gitlab-runner.nix
+    # ../../modules/gitlab-runner.nix
+    # ../../modules/gitlab-web.nix
+    ../../modules/jenkins.nix
   ];
 
   fileSystems."/" = {
@@ -13,16 +15,12 @@
     fsType = "vfat";
   };
 
-  networking.hostName = "bob-the-builder";
+  networking.hostName = "gitlab";
 
   sops.defaultSopsFile = ../../secrets.yaml;
 
   scott.sops.enable = true;
   scott.sops.ageKeyFile = "/var/keys/age";  
-
-  # users.users.root.openssh.authorizedKeys.keys = [
-  #   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICnt0c1V/ZZFW5J3HGqqxDwr6zoq5ouB5uB7IFXxZqdB cardno:18_978_827"
-  # ];
 
   virtualisation.docker.enable = true;
 

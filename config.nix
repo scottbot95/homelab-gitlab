@@ -28,7 +28,7 @@ in {
       log_level = "debug";
     };
 
-    qemu.bob-the-builder = {
+    qemu.gitlab = {
       enable = true;
       agent = true;
       target_node = "pve";
@@ -38,7 +38,7 @@ in {
       bios = "ovmf";
       os_type = "cloud-init";
       cores = 8;
-      memory = 4096;
+      memory = 8192;
 
       network = [{
         model = "virtio";
@@ -57,7 +57,7 @@ in {
     };
   };
 
-  module.bob-the-builder_deploy_nixos.keys = {
+  module.gitlab_deploy_nixos.keys = {
     age = "\${data.sops_file.secrets.data[\"age_key\"]}";
   };
 }
